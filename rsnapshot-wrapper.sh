@@ -53,6 +53,28 @@ SLEEPTIME=1800
 ###################################
 ############ Functions ############
 
+# Verifies that arguments are correct
+verifyArguments() {
+# Verify that first argument is correct.
+  if [ ! -r $CONFIG ]; then
+    echo 'First argument is invalid.'
+    echo "Configuration file is missing or unreadable ($CONFIG). Please check your input."
+    exit 1
+  fi
+# Verify the second argument by looping through $BACKUPTYPES (set in setInfoFromConf()).
+  PASS=0
+  for TYPE in ${BACKUPTYPES[@]}; do
+    if [ $TYPE == $BACKUPTYPE ]; then
+      PASS=1
+    fi
+  done
+  if [ $PASS -eq 0 ]; then
+    echo "Second argument is invalid. Please choose any of the following (parsed from $CONFIG): "
+    echo "${BACKUPTYPES[@]}"
+    exit 1
+  fi
+}
+
 # setInfoFromConf() fetches necessary info from $CONFIG
 # HOSTCONF contains IP/hostname of remote host
 # BACKUPTYPES contains all intervales
@@ -96,53 +118,40 @@ executeRsnapshot() {
 ###################################
 ############ Execution ############
 
-# Exit if configuration file doesn't exist or isn't readable.
-if [ ! -r $CONFIG ]; then
-  echo 'First argument is invalid.'
-  echo "Configuration file is missing or unreadable ($CONFIG). Please check your input."
-  exit 1
-fi
-
 setInfoFromConf;
-setEnv;
+verifyArguments;
 
-# Verify if second argument is valid.
-for TYPE in ${BACKUPTYPES[@]}; do if [ $TYPE == $BACKUPTYPE ]; then
+setEnv;
 
 # Remote host connectivity is only needed for the first interval entry.
 # http://rsnapshot.org/howto/1.2/rsnapshot-HOWTO.en.html#how_it_works
-  if [ $BACKUPTYPE != ${BACKUPTYPES[0]} ]; then
-    executeRsnapshot;
-  fi
-  while [ $TRIES -lt $MAXTRIES ]; do
+# If it isn't "daily" run executeRsnapshot directy since connectivity is not needed.
+if [ $BACKUPTYPE != ${BACKUPTYPES[0]} ]; then
+  executeRsnapshot;
+fi
+
+while [ $TRIES -lt $MAXTRIES ]; do
 # Remote host is localhost. Reverse SSH tunnel == check if system is listening to designated port.
-    if [ $HOSTCONF == 'localhost' ]; then
-      $NETSTAT $NETSTATPREFIX | $GREP ":$SSHTUNNELPORT" >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        executeRsnapshot;
-      else
-        sleepTime;
-        if [ $TRIES -eq $MAXTRIES ]; then
-          noMoreTries;
-        fi
-      fi
+  if [ $HOSTCONF == 'localhost' ]; then
+    $NETSTAT $NETSTATPREFIX | $GREP ":$SSHTUNNELPORT" >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      executeRsnapshot;
     else
+      sleepTime;
+    if [ $TRIES -eq $MAXTRIES ]; then
+      noMoreTries;
+    fi
+  fi
+  else
 # Remote host isn't 'localhost'. Use ping to determine if host is up.
-      $PING $PINGPREFIX $HOSTCONF >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        executeRsnapshot;
-      else
-        sleepTime;
-        if [ $TRIES -eq $MAXTRIES ]; then
-          noMoreTries;
-        fi
+    $PING $PINGPREFIX $HOSTCONF >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      executeRsnapshot;
+    else
+      sleepTime;
+      if [ $TRIES -eq $MAXTRIES ]; then
+        noMoreTries;
       fi
     fi
-  done  
-fi; done 
-
-if [ $? -eq 0 ]; then
-  echo 'Second argument is invalid. Please choose any of the following:'
-  echo 'hourly, daily, weekly or monthly'
-  exit 1
-fi
+  fi
+done  
