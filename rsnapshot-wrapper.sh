@@ -111,7 +111,7 @@ for TYPE in ${BACKUPTYPES[@]}; do if [ $TYPE == $BACKUPTYPE ]; then
 
 # Remote host connectivity is only needed for the first interval entry.
 # http://rsnapshot.org/howto/1.2/rsnapshot-HOWTO.en.html#how_it_works
-  if [ $BACKUPTYPE != $BACKUPTYPES[0] ]; then
+  if [ $BACKUPTYPE != ${BACKUPTYPES[0]} ]; then
     executeRsnapshot;
   fi
   while [ $TRIES -lt $MAXTRIES ]; do
