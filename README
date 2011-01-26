@@ -6,21 +6,21 @@ Another feature is gives is the ability to try to backup hosts even if they're u
 Also it adds the ability to backup hosts through reverse SSH-tunnels (like connected laptops). This feature requires that the laptop has a reverse port forwarded and the configuration file is properly set up.
 
 Usage: /path/to/rsnapshot-wrapper.sh [config] [backup type]
-Example: /usr/local/bin/rsnapshot-wrapper.sh /etc/rsnapshot/rsnapshot-laptop.conf daily
+Example: /path/to/rsnapshot-wrapper.sh /etc/rsnapshot/rsnapshot-laptop.conf daily
 
 Example of cron entries:
-0   11  *  *  *   /usr/local/bin/rsnapshot-wrapper.sh laptop daily
-20  15  *  *  2   /usr/local/bin/rsnapshot-wrapper.sh laptop weekly
-0   0   03 *  *   /usr/local/bin/rsnapshot-wrapper.sh laptop monthly
+0   11  *  *  *   /path/to/rsnapshot-wrapper.sh laptop daily
+20  15  *  *  2   /path/to/rsnapshot-wrapper.sh laptop weekly
+0   0   03 *  *   /path/to/rsnapshot-wrapper.sh laptop monthly
 
 
 --- Example ---
 
 Concepts:
-[client] = the host which is a client to the backup server.
-[server] = the backup server (running rsnapshot)
-[hostname] = hostname of client
-[user] = user which will be used on client side
+[client]    = the host which is a client to the backup server.
+[server]    = the backup server (running rsnapshot)
+[hostname]  = hostname of client
+[user]      = user which will be used on client side
 
 
 -- Server side --
@@ -58,6 +58,6 @@ In visudo (/etc/sudoers)
 
 This is also done on [client].
 
-Copy scripts/validate-rsync.sh to proper folders (/usr/local/bin might be a choice).
+Copy scripts/validate-rsync.sh to proper directory (/usr/local/bin might be a choice).
 For example if validate-rsync.sh resides in /usr/local/bin and only 10.0.0.9 should be allowed to connect with public key pair add the following string to /home/[user]/.ssh/authorized_keys before private key part.
-from="10.0.0.9",command="/usr/local/bin/validate-rsync.sh" ssh-rsa ... <private key>
+  from="10.0.0.9",command="/usr/local/bin/validate-rsync.sh" ssh-rsa ... <private key>
