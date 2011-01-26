@@ -99,7 +99,7 @@ executeRsnapshot() {
 # Exit if configuration file doesn't exist or isn't readable.
 if [ ! -r $CONFIG ]; then
   echo 'First argument is invalid.'
-  echo "Configuration file is missing ($CONFIG). Please check your input."
+  echo "Configuration file is missing or unreadable ($CONFIG). Please check your input."
   exit 1
 fi
 
