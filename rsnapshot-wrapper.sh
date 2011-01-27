@@ -11,10 +11,10 @@
 # Script takes 2 arguments. Argument mismatch returns an error.
 if [ $# -ne 2 ]
 then
-  echo 'Script requires 2 arguments.'
+  echo "$0 takes two argumetnts. If not supplied a help message is shown."
   echo "$0 [config] [backup type]"
   echo '[config]: assumed location (/etc/rsnapshot/rsnapshot-[config].conf)'
-  echo '[backup type]: hourly, daily... (defined in $CONFIG)'
+  echo '[backup type]: hourly, daily... (parsed from configuration file)'
   exit 1
 fi
 
