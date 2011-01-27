@@ -62,13 +62,13 @@ verifyArguments() {
     exit 1
   fi
 # Verify the second argument by looping through $BACKUPTYPES (set in setInfoFromConf()).
-  PASS=0
+  PASS=
   for TYPE in ${BACKUPTYPES[@]}; do
     if [ $TYPE == $BACKUPTYPE ]; then
-      PASS=1
+      PASS=0
     fi
   done
-  if [ $PASS -eq 0 ]; then
+  if [ $PASS -ne 0 ]; then
     echo "Second argument is invalid. Please choose any of the following (parsed from $CONFIG): "
     echo "${BACKUPTYPES[@]}"
     exit 1
