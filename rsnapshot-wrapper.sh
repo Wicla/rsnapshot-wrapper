@@ -75,12 +75,12 @@ verifyArguments() {
   fi
 }
 
-# setInfoFromConf() fetches necessary info from $CONFIG
+# parseConfigurationFile() fetches necessary info from $CONFIG
 # HOSTCONF contains IP/hostname of remote host
 # BACKUPTYPES contains all intervales
 # SSHTUNNELPORT contains ssh_args port. Used in case localhost apears as remote host (user@localhost). (SSH reverse tunnel)
 # TODO: Find a cleaner solution to get port number. 
-setInfoFromConf() {
+parseConfigurationFile() {
   HOSTCONF=$($GREP -m 1 ^backup $CONFIG | $CUT -d@ -f2 | $CUT -d: -f1)
   BACKUPTYPES=( $($GREP ^interval $CONFIG | $CUT -f2) )
   SSHTUNNELPORT=$($GREP -E -o "\-p[[:space:]]??[[:digit:]]*?" $CONFIG | $CUT -dp -f2 | $TR -d '[[:space:]]')
@@ -118,7 +118,7 @@ executeRsnapshot() {
 ###################################
 ############ Execution ############
 
-setInfoFromConf;
+parseConfigurationFile;
 verifyArguments;
 
 setEnv;
