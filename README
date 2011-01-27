@@ -6,12 +6,12 @@ Another feature is gives is the ability to try to backup hosts even if they're u
 Also it adds the ability to backup hosts through reverse SSH-tunnels (like connected laptops). This feature requires that the laptop has a reverse port forwarded and the configuration file is properly set up.
 
 Usage: /path/to/rsnapshot-wrapper.sh [config] [backup type]
-Example: /path/to/rsnapshot-wrapper.sh /etc/rsnapshot/rsnapshot-laptop.conf daily
+Example: /path/to/rsnapshot-wrapper.sh laptop daily
 
 Example of cron entries:
-0   11  *  *  *   /path/to/rsnapshot-wrapper.sh laptop daily
-20  15  *  *  2   /path/to/rsnapshot-wrapper.sh laptop weekly
-0   0   03 *  *   /path/to/rsnapshot-wrapper.sh laptop monthly
+  0   11  *  *  *   /path/to/rsnapshot-wrapper.sh laptop daily
+  20  15  *  *  2   /path/to/rsnapshot-wrapper.sh laptop weekly
+  0   0   03 *  *   /path/to/rsnapshot-wrapper.sh laptop monthly
 
 
 --- Example ---
@@ -32,12 +32,25 @@ If this is required modify rsnapshot configuration file. Find rsync_short_args a
 Generate a new public key pair on the [server], preferly with passphrase, with [hostname] as hostname of host.
   # ssh-keygen -f /root/.ssh/[hostname]
 
+To be able to use public key authentication your keys needs to be available for the system. Being prompted for passphrase each backup isn't optimal.
+This is where keychain comes in. Loading the private key into keychain is recommended every time root is logged in. This is done by adding the following to .bash_profile (if bash is being used).
+Adding it adds the key to keychain.
+  keychain ~/.ssh/[hostname]
+  . ~/.keychain/$HOSTNAME-sh
+
+
 Install rsnapshot-wrapper.sh to a suitable location (/usr/local/bin/ perhaps?)
 This is a set of crontab entries. Modify to suite your needs.
 
   0   11  *  *  *   /usr/local/bin/rsnapshot-wrapper.sh [hostname] daily
   20  15  *  *  2   /usr/local/bin/rsnapshot-wrapper.sh [hostname] weekly
   0   0   03 *  *   /usr/local/bin/rsnapshot-wrapper.sh [hostname] monthly
+
+- Adding extra security -
+To increase security one could add the following to .bash_profile instead. This clears the keychain cache every time the user is logged on.
+  keychain --clear
+  keychain ~/.ssh/[hostname]
+  . ~/.keychain/$HOSTNAME-sh
 
 -- Client side --
 
@@ -54,9 +67,7 @@ In visudo (/etc/sudoers)
   [user]        ALL=NOPASSWD: BACKUPCOMMANDS
 
 
--- Adding extra security --
-
-This is also done on [client].
+- Adding extra security -
 
 Copy scripts/validate-rsync.sh to proper directory (/usr/local/bin might be a choice).
 For example if validate-rsync.sh resides in /usr/local/bin and only 10.0.0.9 should be allowed to connect with public key pair add the following string to /home/[user]/.ssh/authorized_keys before private key part.
