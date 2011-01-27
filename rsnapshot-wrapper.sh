@@ -1,14 +1,15 @@
 #!/bin/bash
-###################################
-###### Introduction ###############
-# This script uses password-protected public key authentication.
-# It makes use of:
+####################### READ THIS INTRODUCTION #################################
+# This script is a wrapper for rsnapshot. It makes it possible to use passphrase-protected public key authentication and more.
+# See README for more.
+#
+# This script uses the following *nix programs.
 #  * ssh-agent
 #  * keychain (http://www.funtoo.org/en/security/keychain/intro/)
 #  * rsnapshot (http://rsnapshot.org/)
 #  * other common *nix commands
 
-# Script takes 2 arguments. Argument mismatch returns an error.
+# Print help message if not the two required arguments is supplied.
 if [ $# -ne 2 ]
 then
   echo "$0 takes two argumetnts. If not supplied a help message is shown."
@@ -18,8 +19,7 @@ then
   exit 1
 fi
 
-###################################
-######## Executables ##############
+####################### Executables ############################################
 DATE=/bin/date
 GREP=/bin/grep
 CUT=/usr/bin/cut
@@ -29,9 +29,7 @@ NETSTAT=/bin/netstat
 SLEEP=/bin/sleep
 RSNAPSHOT=/usr/bin/rsnapshot
 
-###################################
-######## Variables ################
-# Prefixes
+####################### CONFIGURATION BEGINS HERE ##############################
 PINGPREFIX='-c 1 -w 5'
 NETSTATPREFIX='-tl'
 
@@ -39,21 +37,22 @@ HOST="$1"
 BACKUPTYPE="$2"
 CURRENTDATE=$($DATE +%F)
 
-# Path to configuration file 
+# Build path to configuration file.
 CONFIG="/etc/rsnapshot/rsnapshot-$HOST.conf"
 
-# TRIES defines how many times connectivity has been tested 
-# MAXTRIES is the amount of times the script is allowed to run. 
+# TRIES counts how many times the connectivity test has been tested.
+# MAXTRIES tells how many connectivity retries the script is allowed to do.
 # MAXTRIES*SLEEPTIME seconds
 TRIES=0
 MAXTRIES=12
 # SLEEPTIME defines wait time between each try, in seconds.
 SLEEPTIME=1800
 
-###################################
-############ Functions ############
+####################### CONFIGURATION ENDS HERE ################################
 
-# Verifies that arguments are correct
+####################### Functions ##############################################
+
+# verifyArguments verifies that arguments are correct.
 verifyArguments() {
 # Verify that first argument is correct.
   if [ ! -r $CONFIG ]; then
@@ -61,7 +60,7 @@ verifyArguments() {
     echo "Configuration file is missing or unreadable ($CONFIG). Please check your input."
     exit 1
   fi
-# Verify the second argument by looping through $BACKUPTYPES (set in setInfoFromConf()).
+# Verify the second argument by looping through $BACKUPTYPES (set in parseConfigurationFile()).
   PASS=
   for TYPE in ${BACKUPTYPES[@]}; do
     if [ $TYPE == $BACKUPTYPE ]; then
@@ -115,17 +114,18 @@ executeRsnapshot() {
   exit 0
 }
 
-###################################
-############ Execution ############
+####################### Execution ##############################################
 
+# Call parseConfigurationFile to get all necessary information.
 parseConfigurationFile;
+# Verify that arguments are correct.
 verifyArguments;
-
+# Sent enviromental and load cached private key.
 setEnv;
 
-# Remote host connectivity is only needed for the first interval entry.
+# Connectivity to remote host is only needed if the first interval entry is run.
 # http://rsnapshot.org/howto/1.2/rsnapshot-HOWTO.en.html#how_it_works
-# If it isn't "daily" run executeRsnapshot directy since connectivity is not needed.
+# If $BACKUPTYPE isn't "daily" run executeRsnapshot directy since connectivity is not needed.
 if [ $BACKUPTYPE != ${BACKUPTYPES[0]} ]; then
   executeRsnapshot;
 fi
