@@ -56,7 +56,7 @@ To increase security one could add the following to .bash_profile instead. This 
 
 Connecting with root as remote user to [client] is not recommended. It is recommended to create a new [user]. For example backup.
 Once that is done transfer the public part (.pub) to the [client] to be backed up and add it to /home/[user]/.ssh/authorized_keys on the used user.
-  # cat [hostname] >> /home/[user]/.ssh/authorized_keys
+  # cat [hostname].pub >> /home/[user]/.ssh/authorized_keys
 
 It might be needed to add entries in sudo which allows [user] to backup non-readable files (in /etc for example).
 First setup [user] and then add entries in sudo.
