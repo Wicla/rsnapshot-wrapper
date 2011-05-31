@@ -97,9 +97,9 @@ sleepTime() {
   TRIES=$(($TRIES+1))
 }
 
-# noMoreTries() is executed if there is no more attempts to be made to contact remote host
+# giveUp() is executed if there is no more attempts to be made to contact remote host
 # Alerts administrator (mail set by cron) and exits script.
-noMoreTries() {
+giveUp() {
     echo "$BACKUPTYPE backup of $HOST failed."
     echo "Date: $CURRENTDATE."
     echo "Remote host is not responding."
@@ -139,7 +139,7 @@ while [ $TRIES -lt $MAXTRIES ]; do
     else
       sleepTime;
     if [ $TRIES -eq $MAXTRIES ]; then
-      noMoreTries;
+      giveUp;
     fi
   fi
   else
@@ -150,8 +150,8 @@ while [ $TRIES -lt $MAXTRIES ]; do
     else
       sleepTime;
       if [ $TRIES -eq $MAXTRIES ]; then
-        noMoreTries;
+        giveUp;
       fi
     fi
   fi
-done  
+done
