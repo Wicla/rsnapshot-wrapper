@@ -25,8 +25,6 @@ GREP=/bin/grep
 CUT=/usr/bin/cut
 TR=/usr/bin/tr
 PING=/bin/ping
-NETSTAT=/bin/netstat
-SLEEP=/bin/sleep
 RSNAPSHOT=/usr/bin/rsnapshot
 
 ####################### CONFIGURATION BEGINS HERE ##############################
@@ -39,14 +37,6 @@ CURRENTDATE=$($DATE +%F)
 
 # Build path to configuration file.
 CONFIG="/etc/rsnapshot/rsnapshot-$HOST.conf"
-
-# TRIES counts how many times the connectivity test has been tested.
-# MAXTRIES tells how many connectivity retries the script is allowed to do.
-# MAXTRIES*SLEEPTIME seconds
-TRIES=0
-MAXTRIES=12
-# SLEEPTIME defines wait time between each try, in seconds.
-SLEEPTIME=1800
 
 ####################### CONFIGURATION ENDS HERE ################################
 
@@ -91,15 +81,9 @@ setEnv() {
   source $HOME/.keychain/$HOSTNAME-sh
 }
 
-# sleepTime() waites for $SLEEPTIME in case remote host isn't up and increments $TRIES with 1.
-sleepTime() {
-  $SLEEP $SLEEPTIME
-  TRIES=$(($TRIES+1))
-}
-
-# noMoreTries() is executed if there is no more attempts to be made to contact remote host
-# Alerts administrator (mail set by cron) and exits script.
-noMoreTries() {
+# giveUp() is executed if there is no more attempts to be made to contact remote host$
+# Alerts administrator (mail set by cron) and exits script.$
+giveUp() {
     echo "$BACKUPTYPE backup of $HOST failed."
     echo "Date: $CURRENTDATE."
     echo "Remote host is not responding."
@@ -110,7 +94,6 @@ noMoreTries() {
 # Exits gracefully.
 executeRsnapshot() {
   $RSNAPSHOT -c $CONFIG $BACKUPTYPE
-  TRIES=$MAXTRIES
   exit 0
 }
 
@@ -130,28 +113,20 @@ if [ $BACKUPTYPE != ${BACKUPTYPES[0]} ]; then
   executeRsnapshot;
 fi
 
-while [ $TRIES -lt $MAXTRIES ]; do
+if [ $HOSTCONF == 'localhost' ]; then
 # Remote host is localhost. Reverse SSH tunnel == check if system is listening to designated port.
-  if [ $HOSTCONF == 'localhost' ]; then
-    $NETSTAT $NETSTATPREFIX | $GREP ":$SSHTUNNELPORT" >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      executeRsnapshot;
-    else
-      sleepTime;
-    if [ $TRIES -eq $MAXTRIES ]; then
-      noMoreTries;
-    fi
-  fi
+  $NETSTAT $NETSTATPREFIX | $GREP ":$SSHTUNNELPORT" >/dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    executeRsnapshot;
   else
-# Remote host isn't 'localhost'. Use ping to determine if host is up.
-    $PING $PINGPREFIX $HOSTCONF >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      executeRsnapshot;
-    else
-      sleepTime;
-      if [ $TRIES -eq $MAXTRIES ]; then
-        noMoreTries;
-      fi
-    fi
+    giveUp;
   fi
-done  
+else
+# Remote host isn't 'localhost'. Use ping to determine if host is up.
+  $PING $PINGPREFIX $HOSTCONF >/dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    executeRsnapshot;
+  else
+    giveUp;
+  fi
+fi
